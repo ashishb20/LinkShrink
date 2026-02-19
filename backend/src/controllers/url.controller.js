@@ -25,7 +25,7 @@ export const shortUrl = async (req, res) => {
             shortCode
         });
         res.status(201).json({
-            shortUrl: `${process.env.BASE_URL}/${shortCode}`,
+            shortUrl: `${process.env.BASE_URL}/api/url/${shortCode}`,
         });
     } catch(error) {
         res.status(500).json({message: "Server Error"});
