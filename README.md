@@ -25,6 +25,8 @@ The application checks for existing URLs, generates a unique key using a non-seq
 3.  **Service** generates a standardized unique key (collision resistant).
 4.  **Database** stores the key-value pair (ShortCode -> LongURL).
 5.  **Redirect** `Get /:code` looks up the key -> increment click count -> 302  Redirect.
+6.  **Title** : title for each URL.
+7.  **QR Code** : QR generation for URLs
 
 ---
 
