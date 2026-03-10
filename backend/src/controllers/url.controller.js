@@ -11,7 +11,7 @@ const isValidUrl = (string) => {
 };
 
 export const shortUrl = async (req, res) => {
-    const { longUrl } = req.body;
+    const { longUrl, customAlias } = req.body;
     if(!longUrl) {
         return res.status(400).json({message: "Long URL is required"});
     }
@@ -19,10 +19,12 @@ export const shortUrl = async (req, res) => {
         return res.status(400).json({message:"Invalid URL"});
     }
     try {
+        
         const shortCode = generateShortCode();
         const newUrl = await Url.create({
             longUrl,
-            shortCode
+            shortCode,
+            title: customAlias || ""
         });
         res.status(201).json({
             shortUrl: `${process.env.BASE_URL}/api/url/${shortCode}`,

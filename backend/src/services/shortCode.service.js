@@ -1,4 +1,4 @@
-import {nanoid} from 'nanoid';
+import { nanoid } from 'nanoid';
 
 export const generateShortCode = () => {
     return nanoid(7);

@@ -13,6 +13,10 @@ const urlSchema = new mongoose.Schema(
         clicks: {
             type: Number,
             default: 0
+        },
+        title: {
+            type: String,
+            default:""
         }
     },
     {
