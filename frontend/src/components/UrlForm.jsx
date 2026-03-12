@@ -47,14 +47,21 @@ const UrlForm = () => {
   };
 
   const downloadImage = (format) => {
-    const canvas = document.getElementById("qr-canvas");
+    const container = document.getElementById("qr-canvas-container");      
+    const canvas = container ? container.querySelector("canvas") : document.getElementById("qr-canvas");
     if (canvas) {
-      const url = canvas.toDateURL(`image/${format}`, 1.0);
-      const a = document.createElement("a");
-      a.download = `qrcode.${format}`;
-      a.href = url;
-      a.click();
-    }
+      canvas.toBlob((blob) => {
+        if(!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.download = `qrcode.${format}`;
+        a.href = url;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, `image/${format}`, 1.0);
+    } 
   };
 
   const downloadSVG = () => {
@@ -113,7 +120,7 @@ const UrlForm = () => {
             <div id="qr-svg-container" className="qr-svg-container">
                 <QRCodeSVG value={shortUrl} size={150} level={"H"} />
             </div>
-            <div style={{ display : "none" }}>
+            <div id="qr-canvas-container" style={{ position: "absolute", left:"-9999px", top:"-9999px"}}>
                 <QRCodeCanvas id="qr-canvas" value={shortUrl} size={800} level={"H"} />
             </div>
             <div className="download-buttons">
