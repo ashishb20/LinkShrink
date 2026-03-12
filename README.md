@@ -7,6 +7,8 @@
 - **Click Tracking**: Persistent counter for every visit.
 - **Copy-to-clipboard**: For quick sharing.
 - **Responsive Design** : Mobile compatible UI.
+- **Title** : custom title for URLs
+- **QR Code** : QR code generate for each URL
 
 ## Demos
 ### Images
@@ -25,6 +27,7 @@ The application checks for existing URLs, generates a unique key using a non-seq
 3.  **Service** generates a standardized unique key (collision resistant).
 4.  **Database** stores the key-value pair (ShortCode -> LongURL).
 5.  **Redirect** `Get /:code` looks up the key -> increment click count -> 302  Redirect.
+
 
 ---
 
