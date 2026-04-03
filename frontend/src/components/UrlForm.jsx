@@ -1,15 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import api from "../api/url.api";
 import "../styles/UrlForm.css";
 import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
+
+const pingServer = () => {
+  fetch(import.meta.env.VITE_API_BASE_URL
+    ? `${import.meta.env.VITE_API_BASE_URL}/api/url/health`
+    : '/api/url/health'
+  ).catch(() => { });
+};
 
 const UrlForm = () => {
   const [longUrl, setLongUrl] = useState("");
   const [customAlias, setCustomAlias] = useState("");
   const [shortUrl, setShortUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [slowLoad, setSlowLoad] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const slowTimer = useRef(null);
+
+  useEffect(() => {
+    pingServer();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,12 +30,17 @@ const UrlForm = () => {
     setShortUrl("");
     setCopied(false);
     setLoading(true);
+    setSlowLoad(false);
+
+    slowTimer.current = setTimeout(() => setSlowLoad(true), 4000);
 
     try {
       new URL(longUrl);
     } catch {
       setError("Please enter a valid URL");
       setLoading(false);
+      clearTimeout(slowTimer.current);
+      setSlowLoad(false);
       return;
     }
 
@@ -33,10 +51,12 @@ const UrlForm = () => {
       console.error(err);
       setError(
         err.response?.data?.message ||
-          "Something went wrong. Please try again.",
+        "Something went wrong. Please try again.",
       );
     } finally {
       setLoading(false);
+      clearTimeout(slowTimer.current);
+      setSlowLoad(false);
     }
   };
 
@@ -47,11 +67,11 @@ const UrlForm = () => {
   };
 
   const downloadImage = (format) => {
-    const container = document.getElementById("qr-canvas-container");      
+    const container = document.getElementById("qr-canvas-container");
     const canvas = container ? container.querySelector("canvas") : document.getElementById("qr-canvas");
     if (canvas) {
       canvas.toBlob((blob) => {
-        if(!blob) return;
+        if (!blob) return;
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.download = `qrcode.${format}`;
@@ -61,14 +81,14 @@ const UrlForm = () => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }, `image/${format}`, 1.0);
-    } 
+    }
   };
 
   const downloadSVG = () => {
     const svg = document.querySelector("#qr-svg-container svg");
     if (svg) {
       const svgData = new XMLSerializer().serializeToString(svg);
-      const blob = new Blob([svgData], { type: "image/svg+xml:charset=utf-8"  });
+      const blob = new Blob([svgData], { type: "image/svg+xml:charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.download = "qrcode.svg";
@@ -118,15 +138,15 @@ const UrlForm = () => {
           <div className="qr-code-section">
             <h3 className="qr-title">QR Code</h3>
             <div id="qr-svg-container" className="qr-svg-container">
-                <QRCodeSVG value={shortUrl} size={150} level={"H"} />
+              <QRCodeSVG value={shortUrl} size={150} level={"H"} />
             </div>
-            <div id="qr-canvas-container" style={{ position: "absolute", left:"-9999px", top:"-9999px"}}>
-                <QRCodeCanvas id="qr-canvas" value={shortUrl} size={800} level={"H"} />
+            <div id="qr-canvas-container" style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
+              <QRCodeCanvas id="qr-canvas" value={shortUrl} size={800} level={"H"} />
             </div>
             <div className="download-buttons">
-                <button onClick={() => downloadImage('png')} className="download-btn">Download PNG</button>
-                <button onClick={() => downloadImage('jpeg')} className="download-btn">Download JPEG</button>
-                <button onClick={downloadSVG} className="download-btn">Download SVG</button>
+              <button onClick={() => downloadImage('png')} className="download-btn">Download PNG</button>
+              <button onClick={() => downloadImage('jpeg')} className="download-btn">Download JPEG</button>
+              <button onClick={downloadSVG} className="download-btn">Download SVG</button>
             </div>
           </div>
         </div>
