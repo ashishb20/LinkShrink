@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { createRoot } from "react-dom/client";
 import api from "../api/url.api";
 import "../styles/UrlForm.css";
-import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 
 const pingServer = () => {
   fetch(import.meta.env.VITE_API_BASE_URL
@@ -12,13 +13,11 @@ const pingServer = () => {
 
 const UrlForm = () => {
   const [longUrl, setLongUrl] = useState("");
-  const [customAlias, setCustomAlias] = useState("");
+  const [title, setTitle] = useState("");
   const [shortUrl, setShortUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [slowLoad, setSlowLoad] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-  const slowTimer = useRef(null);
 
   useEffect(() => {
     pingServer();
@@ -30,22 +29,17 @@ const UrlForm = () => {
     setShortUrl("");
     setCopied(false);
     setLoading(true);
-    setSlowLoad(false);
-
-    slowTimer.current = setTimeout(() => setSlowLoad(true), 4000);
 
     try {
       new URL(longUrl);
     } catch {
       setError("Please enter a valid URL");
       setLoading(false);
-      clearTimeout(slowTimer.current);
-      setSlowLoad(false);
       return;
     }
 
     try {
-      const res = await api.post("/shorten", { longUrl, customAlias });
+      const res = await api.post("/shorten", { longUrl, title });
       setShortUrl(res.data.shortUrl);
     } catch (err) {
       console.error(err);
@@ -55,8 +49,6 @@ const UrlForm = () => {
       );
     } finally {
       setLoading(false);
-      clearTimeout(slowTimer.current);
-      setSlowLoad(false);
     }
   };
 
@@ -66,20 +58,26 @@ const UrlForm = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const downloadImage = (format) => {
-    const container = document.getElementById("qr-canvas-container");
-    const canvas = container ? container.querySelector("canvas") : document.getElementById("qr-canvas");
+  const downloadImage = async (format) => {
+    const { QRCodeCanvas } = await import('qrcode.react');
+    const container = document.createElement('div');
+    container.style.cssText = 'position:absolute;visibility:hidden;';
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    root.render(<QRCodeCanvas value={shortUrl} size={800} level="H" />);
+    await new Promise((r) => setTimeout(r, 100));
+    const canvas = container.querySelector('canvas');
     if (canvas) {
       canvas.toBlob((blob) => {
         if (!blob) return;
         const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
+        const a = document.createElement('a');
         a.download = `qrcode.${format}`;
         a.href = url;
-        document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        root.unmount();
+        container.remove();
       }, `image/${format}`, 1.0);
     }
   };
@@ -111,9 +109,9 @@ const UrlForm = () => {
           />
           <input
             type="text"
-            placeholder="Custom Title (Optional)"
-            value={customAlias}
-            onChange={(e) => setCustomAlias(e.target.value)}
+            placeholder="Website Title (Optional)"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             className="url-input alias-input"
           />
           <button type="submit" disabled={loading} className="shorten-btn">
@@ -139,9 +137,6 @@ const UrlForm = () => {
             <h3 className="qr-title">QR Code</h3>
             <div id="qr-svg-container" className="qr-svg-container">
               <QRCodeSVG value={shortUrl} size={150} level={"H"} />
-            </div>
-            <div id="qr-canvas-container" style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
-              <QRCodeCanvas id="qr-canvas" value={shortUrl} size={800} level={"H"} />
             </div>
             <div className="download-buttons">
               <button onClick={() => downloadImage('png')} className="download-btn">Download PNG</button>
