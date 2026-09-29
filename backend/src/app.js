@@ -1,23 +1,24 @@
 import express from 'express';
 import cors from 'cors';
-import rateLimit from 'express-rate-limit';
+import pinoHttp from 'pino-http';
+import logger from './config/logger.js';
 
-//  Routes add
 import urlRoutes from './routes/url.routes.js';
 import { redirectUrl } from './controllers/url.controller.js';
 
 const app = express();
-// Rate Limiting
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: " Too many requests from this IP, please try again later"
-});
-app.use(limiter);
-app.use(cors());
+
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || '*',
+    methods: ['GET', 'POST'],
+};
+
+app.use(pinoHttp({ logger, autoLogging: { ignore: (req) => req.url === '/health' } }));
+app.use(cors(corsOptions));
 app.use(express.json());
 
-// API routes 
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 app.use('/api/url', urlRoutes);
 app.get('/:code', redirectUrl);
 
