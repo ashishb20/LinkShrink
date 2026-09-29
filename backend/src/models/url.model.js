@@ -1,9 +1,13 @@
 import mongoose from 'mongoose';
+
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
 const urlSchema = new mongoose.Schema(
     {
         longUrl: {
             type: String,
-            required: true
+            required: true,
+            index: true
         },
         shortCode: {
             type: String,
@@ -17,6 +21,11 @@ const urlSchema = new mongoose.Schema(
         title: {
             type: String,
             default:""
+        },
+        expiresAt: {
+            type: Date,
+            default: () => new Date(Date.now() + THIRTY_DAYS_MS),
+            index: { expires: 0 }
         }
     },
     {
