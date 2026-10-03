@@ -6,9 +6,10 @@
     border-radius: 16px;
     padding: 2rem;
     width: 100%;
-    max-width: 600px;
+    max-width: 680px;
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.3);
+    box-sizing: border-box;
 }
 
 .url-form {
@@ -26,17 +27,21 @@
 @media (min-width: 640px) {
     .input-group {
         flex-direction: row;
+        align-items: center;
     }
 }
 
 .url-input {
     flex-grow: 1;
+    min-width: 0;
     padding: 0.75rem 1rem;
     border-radius: 8px;
     border: 1px solid #334155;
     background-color: #0f172a;
     color: #f8fafc;
     font-size: 1rem;
+    line-height: 1.5;
+    box-sizing: border-box;
     transition: border-color 0.2s;
     outline: none;
 }
@@ -50,13 +55,16 @@
     background-color: #3b82f6;
     background: linear-gradient(135deg, #3b82f6,#2563eb, 100% );
     color: white;
-    border: none;
+    border: 1px solid transparent;
     border-radius: 8px;
+    font-size: 1rem;
+    line-height: 1.5;
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39) ;
     transition: all 0.3s ease;
     white-space: nowrap;
+    box-sizing: border-box;
 }
 
 .shorten-btn:hover {

@@ -6,8 +6,8 @@ import { QRCodeSVG } from 'qrcode.react';
 
 const pingServer = () => {
   fetch(import.meta.env.VITE_API_BASE_URL
-    ? `${import.meta.env.VITE_API_BASE_URL}/api/url/health`
-    : '/api/url/health'
+    ? `${import.meta.env.VITE_API_BASE_URL}/health`
+    : '/health'
   ).catch(() => { });
 };
 
