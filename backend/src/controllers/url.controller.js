@@ -1,5 +1,6 @@
 import Url from "../models/url.model.js";
 import { createUrlWithRetry } from "../services/shortCode.service.js";
+import { config } from "../config/env.js";
 
 const PRIVATE_IP_PATTERNS = [
     /^127\./,
@@ -14,6 +15,10 @@ const PRIVATE_IP_PATTERNS = [
 ];
 
 const BLOCKED_HOSTNAMES = ['localhost', 'metadata.google.internal'];
+
+const CODE_PATTERN = /^[A-Za-z0-9_-]{7}$/;
+const MAX_CODES = 200;
+const TITLE_MAX = 100;
 
 const isPrivateHost = (hostname) => {
     if (BLOCKED_HOSTNAMES.includes(hostname)) return true;
@@ -31,7 +36,23 @@ const isValidUrl = (string) => {
     }
 };
 
-const TITLE_MAX = 100;
+const toLinkResponse = (doc) => ({
+    shortUrl: `${config.baseUrl}/${doc.shortCode}`,
+    shortCode: doc.shortCode,
+    longUrl: doc.longUrl,
+    title: doc.title,
+    clicks: doc.clicks,
+    createdAt: doc.createdAt,
+    expiresAt: doc.expiresAt,
+});
+
+export const parseCodes = (raw) => {
+    const codes = String(raw || "")
+        .split(",")
+        .map((code) => code.trim())
+        .filter((code) => CODE_PATTERN.test(code));
+    return [...new Set(codes)].slice(0, MAX_CODES);
+};
 
 export const shortUrl = async (req, res) => {
     const { longUrl, title, customAlias } = req.body;
@@ -60,20 +81,31 @@ export const shortUrl = async (req, res) => {
                 await existing.save();
             }
 
-            return res.status(200).json({
-                shortUrl: `${process.env.BASE_URL}/${existing.shortCode}`,
-                shortCode: existing.shortCode,
-                title: existing.title,
-            });
+            return res.status(200).json(toLinkResponse(existing));
         }
 
         // Always generate strictly 7-character shortCode via createUrlWithRetry
         const doc = await createUrlWithRetry(normalizedUrl, rawTitle);
 
-        res.status(201).json({
-            shortUrl: `${process.env.BASE_URL}/${doc.shortCode}`,
-            shortCode: doc.shortCode,
-            title: doc.title,
+        res.status(201).json(toLinkResponse(doc));
+    } catch (error) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export const listUrls = async (req, res) => {
+    const codes = parseCodes(req.query.codes);
+    if (codes.length === 0) {
+        return res.json({ links: [], missing: [] });
+    }
+
+    try {
+        const docs = await Url.find({ shortCode: { $in: codes } }).lean();
+        const found = new Set(docs.map((doc) => doc.shortCode));
+
+        res.json({
+            links: docs.map(toLinkResponse),
+            missing: codes.filter((code) => !found.has(code)),
         });
     } catch (error) {
         res.status(500).json({ message: "Server Error" });
@@ -84,12 +116,15 @@ export const redirectUrl = async ( req, res) => {
     const { code} = req.params;
     try {
         const url = await Url.findOneAndUpdate(
-            { shortCode: code },
+            { shortCode: code, expiresAt: { $gt: new Date() } },
             { $inc: { clicks: 1 } },
             { new: true }
         );
         if(!url){
-            return res.status(404).json({message: "URL not found"});
+            const exists = await Url.exists({ shortCode: code });
+            return res
+                .status(exists ? 410 : 404)
+                .json({ message: exists ? "URL expired" : "URL not found" });
         }
         res.redirect(url.longUrl);
     } catch(error) {
