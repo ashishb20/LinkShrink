@@ -1,7 +1,9 @@
 import axios from 'axios';
+import { API_URL } from '../lib/apiBase';
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api/url` : '/api/url',
+    baseURL: API_URL,
+    timeout: 10000,
 });
 
 export default api;

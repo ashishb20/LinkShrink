@@ -44,9 +44,11 @@ const ShortenForm = ({ onCreated }) => {
       const link = {
         shortUrl: data.shortUrl,
         shortCode: data.shortCode,
-        title: data.title || title.trim(),
-        longUrl: destination,
-        createdAt: new Date().toISOString(),
+        longUrl: data.longUrl ?? destination,
+        title: data.title ?? title.trim(),
+        clicks: data.clicks ?? 0,
+        createdAt: data.createdAt,
+        expiresAt: data.expiresAt,
       };
 
       setResult(link);
