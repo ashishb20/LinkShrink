@@ -110,9 +110,8 @@ const LinkDetail = ({ link, onClose, onRemove }) => {
         <div className="analytics-note">
           <strong>Click analytics</strong>
           <p>
-            Clicks are counted server-side on every redirect. This API does not
-            expose a read endpoint, so per-link click counts cannot be shown
-            here yet.
+            {Number(link.clicks) || 0} clicks recorded. Counts update every 10
+            seconds while the dashboard is open.
           </p>
         </div>
       </div>

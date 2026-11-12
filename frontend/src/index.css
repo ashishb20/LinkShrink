@@ -175,34 +175,6 @@ a:hover {
   margin-left: auto;
 }
 
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 9px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--text-faint);
-}
-
-.status-pill.online .status-dot {
-  background: var(--success);
-}
-
-.status-pill.offline .status-dot {
-  background: var(--danger);
-}
-
 /* Page */
 
 .page {
@@ -700,6 +672,13 @@ a:hover {
   white-space: nowrap;
 }
 
+.cell-clicks {
+  color: var(--text);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -1057,6 +1036,16 @@ a:hover {
     grid-row: 2;
   }
 
+  .links-table .cell-clicks {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .links-table .cell-clicks::before {
+    content: "Clicks: ";
+    color: var(--text-faint);
+  }
+
   .links-table .cell-actions {
     grid-column: 2;
     grid-row: 1 / span 2;
@@ -1081,14 +1070,6 @@ a:hover {
 }
 
 @media (max-width: 560px) {
-  .status-pill .status-label {
-    display: none;
-  }
-
-  .status-pill {
-    padding: 5px;
-  }
-
   .table-toolbar {
     flex-wrap: wrap;
   }

@@ -30,6 +30,7 @@ const LinkTable = ({ links, onSelect, onRemove }) => {
             <th scope="col">Link</th>
             <th scope="col">Destination</th>
             <th scope="col">Created</th>
+            <th scope="col">Clicks</th>
             <th scope="col">Status</th>
             <th scope="col">
               <span className="sr-only">Actions</span>
@@ -68,6 +69,8 @@ const LinkTable = ({ links, onSelect, onRemove }) => {
               </td>
 
               <td className="cell-created">{formatDate(link.createdAt)}</td>
+
+              <td className="cell-clicks">{Number(link.clicks) || 0}</td>
 
               <td className="cell-status">
                 <StatusBadge link={link} />

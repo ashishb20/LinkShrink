@@ -10,8 +10,11 @@ import {
   LinkIcon,
   SearchIcon,
 } from "../components/Icons";
+import api from "../api/url.api";
 import { loadLinks, saveLinks } from "../lib/storage";
-import { isExpired, linkStatus } from "../lib/utils";
+import { isExpired, linkStatus, mergeLinks } from "../lib/utils";
+
+const REFRESH_MS = 10000;
 
 const Home = () => {
   const [links, setLinks] = useState(loadLinks);
@@ -19,9 +22,49 @@ const Home = () => {
   const [filter, setFilter] = useState("all");
   const [selected, setSelected] = useState(null);
 
+  const codesKey = links.map((link) => link.shortCode).join(",");
+
   useEffect(() => {
     saveLinks(links);
   }, [links]);
+
+  useEffect(() => {
+    if (!codesKey) return;
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const refresh = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const { data } = await api.get("/", {
+          params: { codes: codesKey },
+          signal: controller.signal,
+        });
+        if (!cancelled) {
+          setLinks((current) => mergeLinks(current, data.links ?? []));
+        }
+      } catch {
+        // Keep the last known values when the API is unreachable.
+      }
+    };
+
+    refresh();
+    const timer = setInterval(refresh, REFRESH_MS);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("focus", refresh);
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [codesKey]);
 
   const handleCreated = (link) => {
     setLinks((current) => {
@@ -40,6 +83,10 @@ const Home = () => {
   const expiringCount = links.filter(
     (link) => linkStatus(link) === "expiring",
   ).length;
+  const totalClicks = links.reduce(
+    (sum, link) => sum + (Number(link.clicks) || 0),
+    0,
+  );
 
   const term = query.trim().toLowerCase();
   const visibleLinks = links.filter((link) => {
@@ -97,10 +144,10 @@ const Home = () => {
             </div>
             <div className="stat-card">
               <span className="stat-label">
-                <BarChartIcon size={12} /> Click tracking
+                <BarChartIcon size={12} /> Total clicks
               </span>
-              <div className="stat-value">On</div>
-              <div className="stat-hint">Counted on each redirect</div>
+              <div className="stat-value">{totalClicks}</div>
+              <div className="stat-hint">Auto-refresh every 10s</div>
             </div>
           </div>
 
@@ -115,7 +162,7 @@ const Home = () => {
                   history
                 </p>
               </div>
-              <span className="local-badge">Local history</span>
+              <span className="local-badge">history</span>
             </div>
 
             <div className="table-toolbar">
@@ -188,8 +235,8 @@ const Home = () => {
             )}
 
             <div className="table-footer">
-              Links expire 30 days after creation. Click counts are recorded
-              server-side on redirect.
+              Click counts refresh every 10 seconds. Links expire 30 days after
+              creation.
             </div>
           </section>
         </div>
@@ -204,7 +251,7 @@ const Home = () => {
 
       {selected && (
         <LinkDetail
-          link={selected}
+          link={links.find((link) => link.shortCode === selected.shortCode) ?? selected}
           onClose={() => setSelected(null)}
           onRemove={handleRemove}
         />

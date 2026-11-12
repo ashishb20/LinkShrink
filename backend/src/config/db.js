@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import logger from "./logger.js";
+import { config } from "./env.js";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 3000;
@@ -7,7 +8,7 @@ const RETRY_DELAY_MS = 3000;
 const connectDB = async () => {
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      await mongoose.connect(process.env.MONGO_URI, {
+      await mongoose.connect(config.mongoUri, {
         maxPoolSize: 10,
         serverSelectionTimeoutMS: 5000,
         heartbeatFrequencyMS: 10000,
